@@ -20,7 +20,8 @@ class RegisterController extends Controller
      */
     public function showRegistrationForm()
     {
-        $locations = Location::all(); // Obtener todas las ubicaciones
+        // Obtener todas las ubicaciones disponibles para mostrar en el formulario
+        $locations = Location::all();
         return view('auth.register', compact('locations'));
     }
 
@@ -32,13 +33,26 @@ class RegisterController extends Controller
      */
     public function register(Request $request)
     {
+        // Validar los datos del formulario
         $this->validator($request->all())->validate();
 
+        // Crear el nuevo usuario
         event(new Registered($user = $this->create($request->all())));
 
+        // Iniciar sesión del usuario inmediatamente después de la creación
         Auth::login($user);
 
-        return redirect()->route('dashboard');
+        // Verificar el rol del usuario para redirigirlo a la página correspondiente
+        if ($user->isAdmin()) {
+            return redirect()->route('admin.dashboard');
+        }
+
+        if ($user->isCollector()) {
+            return redirect()->route('collector.dashboard');
+        }
+
+        // Redirigir a la página principal para usuarios regulares
+        return redirect()->route('home');
     }
 
     /**
@@ -54,8 +68,8 @@ class RegisterController extends Controller
             'email' => ['required', 'string', 'email', 'max:255', 'unique:users'],
             'phone' => ['nullable', 'string', 'max:15'],
             'location_id' => ['required', 'exists:locations,id'], // Asegurarse de que la ubicación existe
-            'role' => ['required', 'in:admin,collector,user'],
-            'password' => ['required', 'string', 'min:8', 'confirmed'],
+            'role' => ['required', 'in:admin,collector,user'], // Validar que el rol sea uno de los tres disponibles
+            'password' => ['required', 'string', 'min:8', 'confirmed'], // Validar la contraseña con mínimo de 8 caracteres y confirmación
         ]);
     }
 
@@ -67,13 +81,14 @@ class RegisterController extends Controller
      */
     protected function create(array $data)
     {
+        // Crear el nuevo usuario con los datos validados
         return User::create([
             'name' => $data['name'],
             'email' => $data['email'],
             'phone' => $data['phone'],
-            'location_id' => $data['location_id'],
-            'role' => $data['role'],
-            'password' => Hash::make($data['password']),
+            'location_id' => $data['location_id'], // Asociar la ubicación
+            'role' => $data['role'], // Establecer el rol del usuario
+            'password' => Hash::make($data['password']), // Encriptar la contraseña
         ]);
     }
 }

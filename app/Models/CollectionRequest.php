@@ -33,22 +33,33 @@ class CollectionRequest extends Model
     ];
 
     // Relaciones
+    /**
+     * Relación con el modelo User.
+     */
     public function user(): BelongsTo
     {
         return $this->belongsTo(User::class);
     }
 
+    /**
+     * Relación con el modelo WasteType.
+     */
     public function wasteType(): BelongsTo
     {
         return $this->belongsTo(WasteType::class);
     }
 
+    /**
+     * Relación con el modelo CollectorCompany.
+     */
     public function company(): BelongsTo
     {
-        return $this->belongsTo(CollectorCompany::class, 'company_id');
+        return $this->belongsTo(CollectorCompany::class);
     }
 
-    // Accesor para el color del estado
+    /**
+     * Accesor para obtener el color asociado al estado de la solicitud.
+     */
     public function getStatusColorAttribute(): string
     {
         return match($this->status) {
@@ -58,5 +69,20 @@ class CollectionRequest extends Model
             'canceled'    => 'red-500',
             default       => 'gray-500',
         };
+    }
+
+    // Ejemplo de método adicional: verificar si el usuario está activo
+    /**
+     * Verifica si el usuario asociado está activo.
+     */
+    public function isUserActive(): bool
+    {
+        return $this->user->is_active ?? false;  // Asegúrate de que el modelo User tenga el campo is_active
+    }
+
+    // Otro ejemplo, verificar si el usuario es administrador
+    public function isUserAdmin(): bool
+    {
+        return $this->user->is_admin ?? false;  // Asegúrate de que el modelo User tenga el campo is_admin
     }
 }

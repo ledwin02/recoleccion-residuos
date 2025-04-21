@@ -11,9 +11,12 @@ class Controller extends BaseController
 {
     use AuthorizesRequests, DispatchesJobs, ValidatesRequests;
 
+    /**
+     * Constructor para aplicar middleware de autenticación.
+     */
     public function __construct()
     {
-        // Aquí puedes colocar el middleware global si es necesario
-        $this->middleware('auth'); // Se aplica a todos los controladores que hereden de Controller
+        // Aplicar el middleware de autenticación a todos los controladores que hereden de Controller
+        $this->middleware('auth');
     }
 }

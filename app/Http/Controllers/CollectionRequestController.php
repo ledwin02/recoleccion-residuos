@@ -12,22 +12,21 @@ use Illuminate\Support\Facades\Auth;
 
 class CollectionRequestController extends Controller
 {
-    /**
-     * Middleware de autenticación y autorización.
-     */
     public function __construct()
     {
+        // Middleware de autenticación para asegurar que solo los usuarios autenticados accedan
         $this->middleware('auth');
     }
 
     /**
-     * Listado de solicitudes para admin.
+     * Muestra las solicitudes para el administrador.
      */
     public function adminIndex(): View
     {
+        // El administrador puede ver todas las solicitudes
         $requests = CollectionRequest::with(['user', 'wasteType', 'company'])
-                                    ->latest()
-                                    ->get();
+                                     ->latest()
+                                     ->get();
 
         return view('admin.collection_requests.index', compact('requests'));
     }
@@ -37,64 +36,68 @@ class CollectionRequestController extends Controller
      */
     public function index(): View
     {
-        $userRequests = auth()->user()
-                            ->collectionRequests()
-                            ->with(['wasteType', 'company'])
-                            ->latest()
-                            ->paginate(10);
+        // El usuario puede ver solo sus propias solicitudes
+        $userRequests = Auth::user()
+            ->collectionRequests()
+            ->with(['wasteType', 'company'])
+            ->latest()
+            ->paginate(10);
 
         return view('collection_requests.index', compact('userRequests'));
     }
 
     /**
-     * Formulario de creación de solicitud (usuario).
+     * Muestra el formulario para crear una solicitud de recolección.
      */
     public function create(): View
     {
-        return view('collection_requests.create', [
-            'wasteTypes' => WasteType::all(),
-            'companies' => CollecterCompany::all(),
-        ]);
+        // Se obtienen los tipos de residuos y las empresas de recolección
+        $wasteTypes = WasteType::all();
+        $companies = CollectorCompany::all();
+
+        return view('collection_requests.create', compact('wasteTypes', 'companies'));
     }
 
     /**
-     * Guarda una nueva solicitud en la base de datos.
+     * Almacena una nueva solicitud de recolección en la base de datos.
      */
     public function store(Request $request): RedirectResponse
     {
+        // Validación de la solicitud
         $data = $request->validate([
-            'waste_type_id' => 'required|exists:waste_types,id',
-            'company_id' => 'required|exists:collector_companies,id',
-            'collection_date' => 'required|date|after_or_equal:today',
-            'collection_time' => 'nullable|date_format:H:i',
-            'frequency' => 'required|in:weekly,biweekly,monthly,on_demand',
-            'is_on_demand' => 'boolean',
-            'notes' => 'nullable|string|max:500',
-            'weight' => 'nullable|numeric',
+            'waste_type_id'    => 'required|exists:waste_types,id',
+            'company_id'       => 'required|exists:collector_companies,id',
+            'collection_date'  => 'required|date|after_or_equal:today',
+            'collection_time'  => 'nullable|date_format:H:i',
+            'frequency'        => 'required|in:weekly,biweekly,monthly,on_demand',
+            'is_on_demand'     => 'boolean',  // Si la recolección es bajo demanda
+            'notes'            => 'nullable|string|max:500',
+            'weight'           => 'nullable|numeric',  // Peso de los residuos
         ]);
 
-        auth()->user()
-            ->collectionRequests()
-            ->create($data);
+        // Se crea la solicitud de recolección asociada al usuario autenticado
+        Auth::user()->collectionRequests()->create($data);
 
         return redirect()
             ->route('collection_requests.index')
-            ->with('success', 'Solicitud creada correctamente.');
+            ->with('success', 'Solicitud de recolección creada correctamente.');
     }
 
     /**
-     * Actualiza el estado de la solicitud (solo admin).
+     * Permite al administrador actualizar el estado de una solicitud.
      */
     public function updateStatus(Request $request, CollectionRequest $collectionRequest): RedirectResponse
     {
+        // Validación para asegurarse de que el estado es válido
         $request->validate([
             'status' => 'required|in:pending,in_progress,completed,canceled',
         ]);
 
+        // Actualizar el estado de la solicitud
         $collectionRequest->update(['status' => $request->status]);
 
         return redirect()
             ->route('collection_requests.index')
-            ->with('success', 'Estado actualizado correctamente.');
+            ->with('success', 'Estado de la solicitud actualizado correctamente.');
     }
 }

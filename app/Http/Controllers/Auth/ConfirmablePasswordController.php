@@ -12,7 +12,7 @@ use Illuminate\View\View;
 class ConfirmablePasswordController extends Controller
 {
     /**
-     * Show the confirm password view.
+     * Mostrar la vista para confirmar la contraseña.
      */
     public function show(): View
     {
@@ -20,12 +20,15 @@ class ConfirmablePasswordController extends Controller
     }
 
     /**
-     * Confirm the user's password.
+     * Confirmar la contraseña del usuario actual.
      */
     public function store(Request $request): RedirectResponse
     {
-        if (! Auth::guard('web')->validate([
-            'email' => $request->user()->email,
+        $user = $request->user();
+
+        // Verifica que las credenciales sean válidas
+        if (! $user || ! Auth::guard('web')->validate([
+            'email' => $user->email,
             'password' => $request->password,
         ])) {
             throw ValidationException::withMessages([
@@ -33,8 +36,19 @@ class ConfirmablePasswordController extends Controller
             ]);
         }
 
+        // Marca la contraseña como confirmada recientemente
         $request->session()->put('auth.password_confirmed_at', time());
 
-        return redirect()->intended(route('dashboard', absolute: false));
+        // Redirección basada en rol
+        if (method_exists($user, 'isAdmin') && $user->isAdmin()) {
+            return redirect()->route('admin.dashboard'); // Asegúrate de tener esta ruta
+        }
+
+        if (method_exists($user, 'isCollector') && $user->isCollector()) {
+            return redirect()->route('collector.dashboard'); // Si tienes recolectores
+        }
+
+        // Redirección para usuarios normales
+        return redirect()->route('home'); // Esta ruta debería existir
     }
 }

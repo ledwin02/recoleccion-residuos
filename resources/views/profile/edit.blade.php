@@ -96,6 +96,7 @@
                                     type="password"
                                     class="mt-1 block w-1/2"
                                     placeholder="{{ __('Tu contraseña actual') }}"
+                                    required
                                 />
                                 <x-input-error class="mt-2" :messages="$errors->get('password')" />
                             </div>

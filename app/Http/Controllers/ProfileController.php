@@ -12,58 +12,65 @@ use Illuminate\View\View;
 class ProfileController extends Controller
 {
     /**
-     * Display the user's profile form.
+     * Muestra el formulario de perfil del usuario.
+     *
+     * @param \Illuminate\Http\Request $request
+     * @return \Illuminate\View\View
      */
     public function edit(Request $request): View
     {
+        // Usar Auth::user() en lugar de $request->user()
         return view('profile.edit', [
-            'user' => $request->user(),
+            'user' => Auth::user(),  // Aquí se obtiene el usuario autenticado
         ]);
     }
 
     /**
-     * Update the user's profile information.
+     * Actualiza la información del perfil del usuario.
+     *
+     * @param \App\Http\Requests\ProfileUpdateRequest $request
+     * @return \Illuminate\Http\RedirectResponse
      */
     public function update(ProfileUpdateRequest $request): RedirectResponse
     {
-        // Actualiza los datos básicos del usuario
-        $request->user()->fill($request->validated());
+        // Usar Auth::user() en lugar de $request->user()
+        $user = Auth::user();  // Aquí se obtiene el usuario autenticado
 
-        // Si el email cambió, quita la verificación
-        if ($request->user()->isDirty('email')) {
-            $request->user()->email_verified_at = null;
+        // Actualiza los campos validados
+        $user->fill($request->validated());
+
+        // Si el email fue modificado, se invalida la verificación
+        if ($user->isDirty('email')) {
+            $user->email_verified_at = null;
         }
 
-        // Guarda los cambios en el perfil
-        $request->user()->save();
+        $user->save();
 
-        // Redirecciona con mensaje de éxito
         return Redirect::route('profile.edit')->with('status', 'profile-updated');
     }
 
     /**
-     * Delete the user's account.
+     * Elimina la cuenta del usuario.
+     *
+     * @param \Illuminate\Http\Request $request
+     * @return \Illuminate\Http\RedirectResponse
      */
     public function destroy(Request $request): RedirectResponse
     {
-        // Validación de la contraseña actual
         $request->validateWithBag('userDeletion', [
             'password' => ['required', 'current_password'],
         ]);
 
-        $user = $request->user();
+        // Usar Auth::user() en lugar de $request->user()
+        $user = Auth::user();  // Aquí se obtiene el usuario autenticado
 
-        // Cierra sesión
         Auth::logout();
 
-        // Elimina al usuario de la base de datos
         $user->delete();
 
-        // Invalida y regenera el token de la sesión
         $request->session()->invalidate();
         $request->session()->regenerateToken();
 
-        // Redirecciona al inicio
         return Redirect::to('/');
     }
 }

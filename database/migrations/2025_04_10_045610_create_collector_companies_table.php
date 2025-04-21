@@ -9,15 +9,19 @@ return new class extends Migration
     /**
      * Run the migrations.
      */
-    public function up()
-{
-    Schema::create('collector_companies', function (Blueprint $table) {
-        $table->id();
-        $table->string('name');
-        $table->string('specialties')->default('');  // o algún valor por defecto// Tipos de residuos que manejan
-        $table->timestamps();
-    });
-}
+    public function up(): void
+    {
+        Schema::create('collector_companies', function (Blueprint $table) {
+            $table->id();
+            $table->string('name');
+            $table->string('specialties')->nullable(); // Tipos de residuos que manejan
+            $table->string('address')->nullable();
+            $table->string('phone')->nullable();
+            $table->string('email')->nullable();
+            $table->string('website')->nullable();
+            $table->timestamps();
+        });
+    }
 
     /**
      * Reverse the migrations.

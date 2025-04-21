@@ -19,13 +19,21 @@
             @foreach($userRequests as $request)
                 <div class="bg-white shadow-lg rounded-lg overflow-hidden">
                     <div class="bg-blue-600 text-white p-4">
-                        <h3 class="font-semibold">{{ $request->wasteType->name }}</h3>
+                        <h3 class="font-semibold">{{ optional($request->wasteType)->name ?? 'Tipo desconocido' }}</h3>
                     </div>
                     <div class="p-4">
                         <p><strong>Fecha:</strong> {{ \Carbon\Carbon::parse($request->collection_date)->format('d/m/Y') }}</p>
                         <p><strong>Hora:</strong> {{ $request->collection_time ?? 'No especificada' }}</p>
-                        <p><strong>Empresa:</strong> {{ $request->company->name }}</p>
-                        <p><strong>Frecuencia:</strong> {{ ucfirst(str_replace('_', ' ', $request->frequency)) }}</p>
+                        <p><strong>Empresa:</strong> {{ optional($request->company)->name ?? 'No asignada' }}</p>
+                        <p><strong>Frecuencia:</strong>
+                            {{ match($request->frequency) {
+                                'weekly' => 'Semanal',
+                                'biweekly' => 'Quincenal',
+                                'monthly' => 'Mensual',
+                                'on_demand' => 'Por Demanda',
+                                default => ucfirst($request->frequency),
+                            }}
+                            </p>
                         @if($request->weight)
                             <p><strong>Peso:</strong> {{ $request->weight }} kg</p>
                         @endif
@@ -33,18 +41,24 @@
                             <strong>Estado:</strong>
                             <span class="inline-block px-3 py-1 text-white rounded-full
                                 @if($request->status == 'pending')
-                                    bg-yellow-400
+                                    bg-yellow-500
                                 @elseif($request->status == 'in_progress')
-                                    bg-blue-400
+                                    bg-blue-500
                                 @elseif($request->status == 'completed')
-                                    bg-green-400
+                                    bg-green-500
                                 @elseif($request->status == 'canceled')
-                                    bg-red-400
+                                    bg-red-500
                                 @else
-                                    bg-gray-400
+                                    bg-gray-500
                                 @endif
                             ">
-                                {{ ucfirst(str_replace('_', ' ', $request->status)) }}
+                                {{ match($request->status) {
+                                    'pending' => 'Pendiente',
+                                    'in_progress' => 'En Proceso',
+                                    'completed' => 'Completada',
+                                    'canceled' => 'Cancelada',
+                                    default => ucfirst($request->status),
+                                } }}
                             </span>
                         </p>
                     </div>

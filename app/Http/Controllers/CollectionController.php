@@ -76,15 +76,19 @@ class CollectionController extends Controller
     }
 
     /**
+     * Muestra el formulario para crear una solicitud de recolección.
+     */
+    public function create(): View
+    {
+        $wasteTypes = WasteType::all();
+        $companies = CollectorCompany::all();
+
+        return view('collections.create', compact('wasteTypes', 'companies'));
+    }
+
+    /**
      * Envía notificación al usuario.
      */
-    public function create()
-{
-    $wasteTypes = WasteType::all();
-    $companies = CollectorCompany::all();
-
-    return view('collections.create', compact('wasteTypes', 'companies'));
-}
     protected function sendNotification(CollectionRequest $collectionRequest): void
     {
         try {
